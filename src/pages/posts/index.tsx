@@ -12,7 +12,15 @@ const links = [
     title: 'Котятки',
   },
 ]
-export default function HelloPage() {
+
+interface propsFromApp {
+  user: string
+  app: string
+}
+export default function HelloPage(props: propsFromApp) {
+  console.log(props)
+  console.log(props.user)
+  console.log(props.app)
   return links.map((link) => (
     <React.Fragment key={link.href}>
       <Link href={link.href}>{link.title}</Link>
@@ -21,7 +29,7 @@ export default function HelloPage() {
   ))
 }
 
-//! Так работать с ссылками не стоит. Пример использууется для ознакомления работы с кнопками как подмена ссылки 
+//! Так работать с ссылками не стоит. Пример используется для ознакомления работы с кнопками и useRouter(), как подмена ссылки
 // export default function HelloPage() {
 //   const router = useRouter()
 
