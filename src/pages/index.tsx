@@ -2,8 +2,7 @@ import { GetServerSideProps } from 'next'
 import { readFile } from 'fs/promises'
 import path from 'path'
 import { useState } from 'react'
-
-const XLSX = require('xlsx')
+import ExcelJS from 'exceljs'
 
 interface FilmProperties {
   characters: string[]
@@ -75,19 +74,24 @@ export default function Home({
   return (
     <div>
       <button onClick={addNewRow}>Добавить строку</button>
-      {/* Отображаем таблицу данных */}
       <table>
         <thead>
           <tr>
-            <th>Таблица недопустимых размеров</th>
-            <th>Допустимое значение</th>
+            <th colSpan={2}>Таблица недопустимых размеров</th>
+          </tr>
+          <tr>
+            <th colSpan={2}>Версия от 28.05.18</th>
+          </tr>
+          <tr>
+            <th>Расчётное значение, мм.</th>
+            <th>Допустимое значение, мм.</th>
           </tr>
         </thead>
         <tbody>
           {excelData.map((row, index) => (
             <tr key={index}>
               <td>{row['Таблица недопустимых размеров']}</td>
-              <td>{row.__EMPTY}</td>
+              <td>{row.__EMPTY || 'Значение отсутствует'}</td>
             </tr>
           ))}
         </tbody>
@@ -98,13 +102,23 @@ export default function Home({
 export const getServerSideProps: GetServerSideProps = async (ctx) => {
   const res = await fetch('https://www.swapi.tech/api/films')
   const data = await res.json()
-
+  // Получаем данные как и раньше
   const packageJsonData = await readFile('package.json', 'utf-8')
 
+  // Чтение и парсинг файла Excel с использованием ExcelJS
   const filePath = path.resolve('./public', 'exelFile.xlsx')
-  const workbook = XLSX.readFile(filePath)
-  const sheetName = workbook.SheetNames[0]
-  const excelData = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName])
+  const workbook = new ExcelJS.Workbook()
+  await workbook.xlsx.readFile(filePath)
+  const worksheet = workbook.getWorksheet(1)
+  const excelData: ExcelData = []
+
+  worksheet!.eachRow({ includeEmpty: true }, function (row, rowNumber) {
+    const rowData: ExcelDataRow = {
+      'Таблица недопустимых размеров': row.getCell(1).text,
+      __EMPTY: row.getCell(2).text,
+    }
+    excelData.push(rowData)
+  })
 
   return {
     props: {

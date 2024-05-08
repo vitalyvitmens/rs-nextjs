@@ -1,25 +1,25 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import path from 'path'
+import ExcelJS from 'exceljs'
 
-const XLSX = require('xlsx')
-
-export default function handler(req: NextApiRequest, res: NextApiResponse) {
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
   if (req.method === 'POST') {
     try {
-      const filePath = path.resolve('./public', 'exelFile.xlsx')
-      const workbook = XLSX.readFile(filePath)
-      const sheetName = workbook.SheetNames[0]
-      const worksheet = workbook.Sheets[sheetName]
+      const filePath = path.resolve('./public', 'exelFileUpdated.xlsx')
+      const workbook = new ExcelJS.Workbook()
+      await workbook.xlsx.readFile(filePath)
+      const worksheet = workbook.getWorksheet(1)!
 
       // Добавляем новую строку в конец листа
       const newRow = req.body
-      XLSX.utils.sheet_add_json(worksheet, [newRow], {
-        skipHeader: true,
-        origin: -1,
-      })
-
-      // Перезаписываем файл с новыми данными
-      XLSX.writeFile(workbook, filePath)
+      const lastRow = worksheet.lastRow!
+      const getRowInsert = worksheet.getRow(lastRow.number + 1)
+      getRowInsert.getCell(1).value = newRow['Таблица недопустимых размеров']
+      getRowInsert.getCell(2).value = newRow.__EMPTY
+      await workbook.xlsx.writeFile(filePath)
 
       res.status(200).json({ message: 'Строка успешно добавлена' })
     } catch (error) {
