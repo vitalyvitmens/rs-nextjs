@@ -1,42 +1,68 @@
-//! 6. Клиентская сторона. fetch()
+//! 7. Клиентская сторона. React Query: npm install @tanstack/react-query
+//! Не забудь обернуть все приложение в контекст QueryClientProvider и создать const client = new QueryClient(), например в src\pages\_app.tsx
+import { useQuery } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
-import { useEffect, useState } from 'react'
-
-interface FilmData {
-  result?: {
-    properties: {
-      title: string
-    }
-  }
-  message?: string
-}
 
 export default function Home() {
-  const router = useRouter()
   const { query, isReady } = useRouter()
-  const [data, setData] = useState<FilmData>({})
 
-  useEffect(() => {
-    if (!isReady) return
-    const getData = async () => {
-      const res = await fetch(`https://www.swapi.tech/api/films/${query.id}`)
-      const data = await res.json()
-      setData(data)
-    }
-
-    getData()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isReady])
+  const { data, isLoading, error } = useQuery({
+    enabled: isReady,
+    queryFn: () =>
+      fetch(`https://www.swapi.tech/api/films/${query.id}`).then((res) =>
+        res.json()
+      ),
+    queryKey: ['films', query.id],
+  })
 
   console.log(data)
 
-  if (data.message === 'Film not found') {
-    router.replace('/404')
-    return null
-  }
+  if (isLoading) return <div>Loading...</div>
+  if (error) return <div>Error</div>
+  if (!data || !data.result) return <div>No data found</div>
 
-  return <div>{data?.result?.properties.title}</div>
+  return <div>{data.result.properties.title}</div>
 }
+
+// //! 6. Клиентская сторона. fetch() Так не стоит действовать лучше использовать библиотеки, например такие как react-query
+// import { useRouter } from 'next/router'
+// import { useEffect, useState } from 'react'
+
+// interface FilmData {
+//   result?: {
+//     properties: {
+//       title: string
+//     }
+//   }
+//   message?: string
+// }
+
+// export default function Home() {
+//   const router = useRouter()
+//   const { query, isReady } = useRouter()
+//   const [data, setData] = useState<FilmData>({})
+
+//   useEffect(() => {
+//     if (!isReady) return
+//     const getData = async () => {
+//       const res = await fetch(`https://www.swapi.tech/api/films/${query.id}`)
+//       const data = await res.json()
+//       setData(data)
+//     }
+
+//     getData()
+//     // eslint-disable-next-line react-hooks/exhaustive-deps
+//   }, [isReady])
+
+//   console.log(data)
+
+//   if (data.message === 'Film not found') {
+//     router.replace('/404')
+//     return null
+//   }
+
+//   return <div>{data?.result?.properties.title}</div>
+// }
 
 //! 5. GetStaticProps()
 // import { GetStaticPaths, GetStaticProps } from 'next'
