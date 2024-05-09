@@ -1,28 +1,137 @@
-//! 7. Клиентская сторона. React Query: npm install @tanstack/react-query
-//! Не забудь обернуть все приложение в контекст QueryClientProvider и создать const client = new QueryClient(), например в src\pages\_app.tsx
+//! 9. Suspense, серверные компоненты. Не забудь обернуть всё приложение в Suspense и добавить fallback="Loading..." в src\pages\_app.tsx
+//! Когда Вам важно SEO
 import { useQuery } from '@tanstack/react-query'
+import { GetServerSideProps } from 'next'
 import { useRouter } from 'next/router'
 
-export default function Home() {
+interface FilmData {
+  result?: {
+    properties: {
+      title: string
+    }
+  }
+  message?: string
+}
+
+export default function Home({ film }: { film: FilmData }) {
   const { query, isReady } = useRouter()
 
-  const { data, isLoading, error } = useQuery({
+  const { data, error } = useQuery({
     enabled: isReady,
     queryFn: () =>
       fetch(`https://www.swapi.tech/api/films/${query.id}`).then((res) =>
         res.json()
       ),
     queryKey: ['films', query.id],
+    initialData: film,
+    // suspense: true,   
   })
 
   console.log(data)
 
-  if (isLoading) return <div>Loading...</div>
   if (error) return <div>Error</div>
-  if (!data || !data.result) return <div>No data found</div>
 
   return <div>{data.result.properties.title}</div>
 }
+
+export const getServerSideProps: GetServerSideProps = async (ctx) => {
+  const id = ctx.params?.id
+  const res = await fetch(`https://www.swapi.tech/api/films/${id}`)
+  const data = await res.json()
+
+  if (data.message === 'Film not found') {
+    return {
+      notFound: true,
+    }
+  }
+
+  return {
+    props: {
+      film: data,
+    },
+  }
+}
+
+//! 8. Как было до Suspense. Клиентская сторона. React Query
+//! Когда Вам важно SEO
+// import { useQuery } from '@tanstack/react-query'
+// import { GetServerSideProps } from 'next'
+// import { useRouter } from 'next/router'
+
+// interface FilmData {
+//   result?: {
+//     properties: {
+//       title: string
+//     }
+//   }
+//   message?: string
+// }
+
+// export default function Home({ film }: { film: FilmData }) {
+//   const { query, isReady } = useRouter()
+
+//   const { data, isLoading, error } = useQuery({
+//     enabled: isReady,
+//     queryFn: () =>
+//       fetch(`https://www.swapi.tech/api/films/${query.id}`).then((res) =>
+//         res.json()
+//       ),
+//     queryKey: ['films', query.id],
+//     initialData: film,
+//   })
+
+//   console.log(data)
+
+//   if (isLoading) return <div>Loading...</div>
+//   if (error) return <div>Error</div>
+//   if (!data || !data.result) return <div>No data found</div>
+
+//   return <div>{data.result.properties.title}</div>
+// }
+
+// export const getServerSideProps: GetServerSideProps = async (ctx) => {
+//   const id = ctx.params?.id
+//   const res = await fetch(`https://www.swapi.tech/api/films/${id}`)
+//   const data = await res.json()
+
+//   if (data.message === 'Film not found') {
+//     return {
+//       notFound: true,
+//     }
+//   }
+
+//   return {
+//     props: {
+//       film: data,
+//     },
+//   }
+// }
+
+//! 7. Клиентская сторона. React Query: npm install @tanstack/react-query
+//! Не забудь обернуть все приложение в контекст QueryClientProvider и создать const client = new QueryClient(), например в src\pages\_app.tsx
+// import { useQuery } from '@tanstack/react-query'
+// import { useRouter } from 'next/router'
+
+// export default function Home() {
+//   const { query, isReady } = useRouter()
+
+//   const { data, isLoading, error } = useQuery({
+//     enabled: isReady,
+//     queryFn: () =>
+//       fetch(`https://www.swapi.tech/api/films/${query.id}`).then((res) =>
+//         res.json()
+//       ),
+//     queryKey: ['films', query.id],
+//   })
+
+//   console.log(data)
+
+//   if (isLoading) return <div>Loading...</div>
+//   if (error) return <div>Error</div>
+//   if (!data || !data.result) return <div>No data found</div>
+
+//   return <div>{data.result.properties.title}</div>
+// }
 
 // //! 6. Клиентская сторона. fetch() Так не стоит действовать лучше использовать библиотеки, например такие как react-query
 // import { useRouter } from 'next/router'
