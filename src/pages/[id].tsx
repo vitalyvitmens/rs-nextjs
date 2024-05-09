@@ -1,49 +1,89 @@
-// //! 5. GetStaticProps()
-import { GetStaticPaths, GetStaticProps } from 'next'
+//! 6. Клиентская сторона. fetch()
+import { useRouter } from 'next/router'
+import { useEffect, useState } from 'react'
 
-interface Film {
-  properties: {
-    title: string
+interface FilmData {
+  result?: {
+    properties: {
+      title: string
+    }
   }
+  message?: string
 }
 
-export default function Home({ film }: { film: Film }) {
-  console.log(film)
+export default function Home() {
+  const router = useRouter()
+  const { query, isReady } = useRouter()
+  const [data, setData] = useState<FilmData>({})
 
-  return <div>{film.properties.title}</div>
-}
+  useEffect(() => {
+    if (!isReady) return
+    const getData = async () => {
+      const res = await fetch(`https://www.swapi.tech/api/films/${query.id}`)
+      const data = await res.json()
+      setData(data)
+    }
 
-export const getStaticPaths: GetStaticPaths = async (ctx) => {
-  const res = await fetch(`https://www.swapi.tech/api/films`)
-  const data = await res.json()
-
-  return {
-    paths: data.result.map((film: { uid: string }) => ({
-      params: { id: film.uid },
-    })),
-    fallback: false,
-  }
-}
-
-export const getStaticProps: GetStaticProps = async (ctx) => {
-  const id = ctx.params?.id
-  const res = await fetch(`https://www.swapi.tech/api/films/${id}`)
-  const data = await res.json()
+    getData()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isReady])
 
   console.log(data)
 
   if (data.message === 'Film not found') {
-    return {
-      notFound: true,
-    }
+    router.replace('/404')
+    return null
   }
 
-  return {
-    props: {
-      film: data.result,
-    },
-  }
+  return <div>{data?.result?.properties.title}</div>
 }
+
+//! 5. GetStaticProps()
+// import { GetStaticPaths, GetStaticProps } from 'next'
+
+// interface Film {
+//   properties: {
+//     title: string
+//   }
+// }
+
+// export default function Home({ film }: { film: Film }) {
+//   console.log(film)
+
+//   return <div>{film.properties.title}</div>
+// }
+
+// export const getStaticPaths: GetStaticPaths = async (ctx) => {
+//   const res = await fetch(`https://www.swapi.tech/api/films`)
+//   const data = await res.json()
+
+//   return {
+//     paths: data.result.map((film: { uid: string }) => ({
+//       params: { id: film.uid },
+//     })),
+//     fallback: false,
+//   }
+// }
+
+// export const getStaticProps: GetStaticProps = async (ctx) => {
+//   const id = ctx.params?.id
+//   const res = await fetch(`https://www.swapi.tech/api/films/${id}`)
+//   const data = await res.json()
+
+//   console.log(data)
+
+//   if (data.message === 'Film not found') {
+//     return {
+//       notFound: true,
+//     }
+//   }
+
+//   return {
+//     props: {
+//       film: data.result,
+//     },
+//   }
+// }
 
 //! 4. GetServerSideProps(). Ошибки и редиректы
 // import { GetServerSideProps } from 'next'
