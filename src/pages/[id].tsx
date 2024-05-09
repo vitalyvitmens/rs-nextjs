@@ -1,3 +1,51 @@
+// //! 5. GetStaticProps()
+import { GetStaticPaths, GetStaticProps } from 'next'
+
+interface Film {
+  properties: {
+    title: string
+  }
+}
+
+export default function Home({ film }: { film: Film }) {
+  console.log(film)
+
+  return <div>{film.properties.title}</div>
+}
+
+export const getStaticPaths: GetStaticPaths = async (ctx) => {
+  const res = await fetch(`https://www.swapi.tech/api/films`)
+  const data = await res.json()
+
+  return {
+    paths: data.result.map((film: { uid: string }) => ({
+      params: { id: film.uid },
+    })),
+    fallback: false,
+  }
+}
+
+export const getStaticProps: GetStaticProps = async (ctx) => {
+  const id = ctx.params?.id
+  const res = await fetch(`https://www.swapi.tech/api/films/${id}`)
+  const data = await res.json()
+
+  console.log(data)
+
+  if (data.message === 'Film not found') {
+    return {
+      notFound: true,
+    }
+  }
+
+  return {
+    props: {
+      film: data.result,
+    },
+  }
+}
+
+//! 4. GetServerSideProps(). Ошибки и редиректы
 // import { GetServerSideProps } from 'next'
 
 // export default function Home({ film }) {
@@ -26,90 +74,91 @@
 //   }
 // }
 
-import { GetServerSideProps } from 'next'
-import { readFile } from 'fs/promises'
-import path from 'path'
+//! 3. GetServerSideProps(). Преимущества
+// import { GetServerSideProps } from 'next'
+// import { readFile } from 'fs/promises'
+// import path from 'path'
 
-const XLSX = require('xlsx')
+// const XLSX = require('xlsx')
 
-interface FilmProperties {
-  characters: string[]
-  planets: string[]
-  starships: string[]
-  vehicles: string[]
-  species: string[]
-}
+// interface FilmProperties {
+//   characters: string[]
+//   planets: string[]
+//   starships: string[]
+//   vehicles: string[]
+//   species: string[]
+// }
 
-interface FilmData {
-  description: string
-  properties: FilmProperties
-  uid: string
-  __v: number
-  _id: string
-  title: string
-}
+// interface FilmData {
+//   description: string
+//   properties: FilmProperties
+//   uid: string
+//   __v: number
+//   _id: string
+//   title: string
+// }
 
-interface FilmApiData {
-  properties: FilmData
-}
+// interface FilmApiData {
+//   properties: FilmData
+// }
 
-type FilmsData = FilmData[]
+// type FilmsData = FilmData[]
 
-interface ExcelDataRow {
-  'Таблица недопустимых размеров': string
-  __EMPTY?: string
-}
+// interface ExcelDataRow {
+//   'Таблица недопустимых размеров': string
+//   __EMPTY?: string
+// }
 
-type ExcelData = ExcelDataRow[]
+// type ExcelData = ExcelDataRow[]
 
-interface HomeProps {
-  film: FilmApiData
-  data: FilmsData
-  packageJsonData: string
-  excelData: ExcelData
-}
+// interface HomeProps {
+//   film: FilmApiData
+//   data: FilmsData
+//   packageJsonData: string
+//   excelData: ExcelData
+// }
 
-export default function Home({
-  film,
-  data,
-  packageJsonData,
-  excelData,
-}: HomeProps) {
-  console.log(film)
-  console.log(data)
-  console.log(packageJsonData)
-  console.log(excelData)
+// export default function Home({
+//   film,
+//   data,
+//   packageJsonData,
+//   excelData,
+// }: HomeProps) {
+//   console.log(film)
+//   console.log(data)
+//   console.log(packageJsonData)
+//   console.log(excelData)
 
-  return <div>{film.properties.title}</div>
-}
+//   return <div>{film.properties.title}</div>
+// }
 
-export const getServerSideProps: GetServerSideProps = async (ctx) => {
-  const id = ctx.query.id
-  const res2 = await fetch(`https://www.swapi.tech/api/films/${id}`)
-  const data2 = await res2.json()
+// export const getServerSideProps: GetServerSideProps = async (ctx) => {
+//   const id = ctx.query.id
+//   const res2 = await fetch(`https://www.swapi.tech/api/films/${id}`)
+//   const data2 = await res2.json()
 
-  const res = await fetch('https://www.swapi.tech/api/films')
-  const data = await res.json()
+//   const res = await fetch('https://www.swapi.tech/api/films')
+//   const data = await res.json()
 
-  const packageJsonData = await readFile('package.json', 'utf-8')
+//   const packageJsonData = await readFile('package.json', 'utf-8')
 
-  const filePath = path.resolve('./public', 'exelFile.xlsx')
-  const workbook = XLSX.readFile(filePath)
-  const sheetName = workbook.SheetNames[0]
-  const excelData = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName])
+//   const filePath = path.resolve('./public', 'exelFile.xlsx')
+//   const workbook = XLSX.readFile(filePath)
+//   const sheetName = workbook.SheetNames[0]
+//   const excelData = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName])
 
-  if (data2.message === 'Film not found') {
-    return {
-      notFound: true,
-    }
-  }
+//   if (data2.message === 'Film not found') {
+//     return {
+//       notFound: true,
+//     }
+//   }
 
-  return {
-    props: {
-      film: data2.result,
-      data: data.result,
-      packageJsonData,
-      excelData,
-    },
-  }
-}
+//   return {
+//     props: {
+//       film: data2.result,
+//       data: data.result,
+//       packageJsonData,
+//       excelData,
+//     },
+//   }
+// }
